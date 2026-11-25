@@ -1,0 +1,48 @@
+# ========================================================
+# BẢO MẬT MÁY CHỦ CHO TAXITAITHANHHUNGVN.VN
+# ========================================================
+
+# 1. Chống duyệt thư mục (Ngăn hacker xem danh sách file)
+Options -Indexes
+
+# 2. Ngăn truy cập vào các file cấu hình ẩn, file nguồn nhạy cảm
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "(^#.*#|\.(bak|config|dist|fla|inc|ini|log|psd|sh|sql|sw[op])|~)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# 3. Ép buộc chuyển hướng sang kết nối bảo mật HTTPS (SSL)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# 4. Thêm các HTTP Security Headers chuẩn bảo mật quốc tế
+<IfModule mod_headers.c>
+    # Chống Clickjacking (Không cho trang khác nhúng website vào iframe lừa đảo)
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # Chống tấn công MIME-sniffing
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Chống XSS (Cross-Site Scripting)
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Bảo vệ thông tin chuyển hướng Referrer
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Ép buộc HTTPS HSTS (1 năm)
+    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+</IfModule>
+
+# 5. Chặn các tác nhân quét lỗ hổng và tải trộm web tự động (Bad Bots)
+<IfModule mod_rewrite.c>
+    RewriteCond %{HTTP_USER_AGENT} (HTTrack|Wget|BlackWidow|WebReaper|Teleport|Zeus|WebCopier|Nikto) [NC]
+    RewriteRule .* - [F,L]
+</IfModule>
